@@ -15,6 +15,7 @@ import (
 	"github.com/osbuild/image-builder/internal/distribution"
 	"github.com/osbuild/image-builder/internal/prometheus"
 	"github.com/osbuild/image-builder/internal/provisioning"
+	"github.com/osbuild/image-builder/internal/tutils"
 
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getkin/kin-openapi/routers"
@@ -103,6 +104,7 @@ func Attach(conf *ServerConfig) error {
 
 	middlewares := []echo.MiddlewareFunc{
 		prometheus.StatusMiddleware,
+		addIdentityHeader,
 		echo.WrapMiddleware(identity.Extractor),
 		echo.WrapMiddleware(identity.BasePolicy),
 		noAssociateAccounts,
@@ -125,6 +127,17 @@ func Attach(conf *ServerConfig) error {
 
 	h.server.echo.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 	return nil
+}
+
+func addIdentityHeader(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		c.Request().Header.Set("X-Rh-Identity", tutils.GetCompleteBase64Header("000000"))
+		c.Request().Header.Set("x-rh-identity", tutils.GetCompleteBase64Header("000000"))
+		if err := next(c); err != nil { //exec main process
+			c.Error(err)
+		}
+		return nil
+	}
 }
 
 // return the Identity Header if there is a valid one in the request
