@@ -1,0 +1,15 @@
+FROM golang:1.21.9 as build
+WORKDIR /app
+COPY go.mod go.sum ./
+COPY . .
+RUN go build -o oscap-customizations ./cmd/oscap-customizations/...
+
+FROM fedora-minimal as aws-rie
+RUN curl -sSL -O https://github.com/aws/aws-lambda-runtime-interface-emulator/releases/download/v1.0/aws-lambda-rie
+RUN chmod +x /aws-lambda-rie
+
+FROM fedora:40
+RUN dnf install -y openscap-scanner scap-security-guide openscap-utils libxcrypt-compat && dnf clean all
+COPY --from=aws-rie /aws-lambda-rie /usr/local/bin
+COPY --from=build /app/oscap-customizations /main
+ENTRYPOINT [ "aws-lambda-rie", "/main" ]
