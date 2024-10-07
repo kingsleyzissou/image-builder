@@ -1,0 +1,5 @@
+{
+  "profile": "cis",
+  "datastream": "/usr/share/xml/scap/ssg/content/ssg-cs9-ds.xml",
+  "tailoring": "{\"profiles\":[{\"id\":\"cis\",\"base_profile_id\":\"cis\",\"rules\":{\"partition_for_var\":{\"evaluate\":false}}}]}"
+}
